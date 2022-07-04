@@ -69,27 +69,32 @@ namespace CustomMath
         /// <returns></returns>
         public static Vec3 operator *(Quat rotation, Vec3 point)
         {
+            //Eje de rotacion principal
             float rotX = rotation.x * 2f;
             float rotY = rotation.y * 2f;
             float rotZ = rotation.z * 2f;
 
+            
             float rotX2 = rotation.x * rotX;
             float rotY2 = rotation.y * rotY;
             float rotZ2 = rotation.z * rotZ;
 
+            //Planos de Rotacion
             float rotXY = rotation.x * rotY;
             float rotXZ = rotation.x * rotZ;
             float rotYZ = rotation.y * rotZ;
 
+            //Parte Real
             float rotWX = rotation.w * rotX;
             float rotWY = rotation.w * rotY;
             float rotWZ = rotation.w * rotZ;
 
             Vec3 result = Vec3.Zero;
 
-            result.x = (1f - (rotY2 + rotZ2)) * point.x + (rotXY - rotWZ) * point.y + (rotXZ + rotWY) * point.z;
-            result.y = (rotXY + rotWZ) * point.x + (1f - (rotX2 + rotZ2)) * point.y + (rotYZ - rotWX) * point.z;
-            result.z = (rotXZ - rotWY) * point.x + (rotYZ + rotWX) * point.y + (1f - (rotX2 + rotY2)) * point.z;
+            //Se rotan los ejes y se ignora uno de los ejes, dependiendo de que queramos sacar y se generan los unitarios
+            result.x = (1f - (rotY2 + rotZ2)) * point.x + (rotXY - rotWZ) * point.y + (rotXZ + rotWY) * point.z; //Se ignora X
+            result.y = (rotXY + rotWZ) * point.x + (1f - (rotX2 + rotZ2)) * point.y + (rotYZ - rotWX) * point.z; //Se ignora Y
+            result.z = (rotXZ - rotWY) * point.x + (rotYZ + rotWX) * point.y + (1f - (rotX2 + rotY2)) * point.z; //Se ignora Z
 
             return result;
         }
@@ -141,10 +146,11 @@ namespace CustomMath
             float cy = Mathf.Cos(Mathf.Deg2Rad * vec3.y / 2);
             float sy = Mathf.Sin(Mathf.Deg2Rad * vec3.y / 2);
             float cx = Mathf.Cos(Mathf.Deg2Rad * vec3.x / 2);
-            float sx = Mathf.Sin(Mathf.Deg2Rad * vec3.x / 2);           
+            float sx = Mathf.Sin(Mathf.Deg2Rad * vec3.x / 2);
 
             Quat quat = new Quat(); // Se crea el quaternion y se le asignan las rotaciones (abajo)
-            
+
+            //Se trabaja todo en un quaternion para evitar el desfasaje por la perdida de precision de punto flotante
             quat.w = cx * cy * cz + sx * sy * sz;   // Real
             quat.x = sx * cy * cz - cx * sy * sz;   // Imaginario X
             quat.y = cx * sy * cz + sx * cy * sz;   // Imaginario Y
@@ -160,17 +166,17 @@ namespace CustomMath
         /// <param name="quat"></param>
         /// <returns></returns>
         private static Vec3 ToEulerAngles(Quat quat)
-        {   
+        {
             float sqw = quat.w * quat.w;
             float sqx = quat.x * quat.x;
             float sqy = quat.y * quat.y;
             float sqz = quat.z * quat.z;
-            float unit = sqx + sqy + sqz + sqw; //se chequea si el quaternion esta normalizado y si no, se utiliza esta variable Unit
+            float unit = sqx + sqy + sqz + sqw; 
             float test = quat.x * quat.w - quat.y * quat.z; //se crea esta variable para que obtengamos el valor de X
             Vec3 vec3;
 
             //dependiendo del valor de X podemos obtener 2 singularidades y se le sumara o restara Pi para anular esta singularidad
-            if (test>0.4999f*unit) // singularidad en polo norte
+            if (test > 0.4999f * unit) // singularidad en polo norte
             {
                 vec3.y = 2f * Mathf.Atan2(quat.y, quat.x);
                 vec3.x = Mathf.PI / 2;
@@ -190,7 +196,7 @@ namespace CustomMath
             vec3.y = (float)Math.Atan2(2f * q.x * q.w + 2f * q.y * q.z, 1 - 2f * (q.z * q.z + q.w * q.w)); //Yaw
             vec3.x = (float)Math.Asin(2f * (q.x * q.z - q.w * q.y));                                       //Pitch
             vec3.z = (float)Math.Atan2(2f * q.x * q.y + 2f * q.z * q.w, 1 - 2f * (q.y * q.y + q.z * q.z)); //Roll
-            return vec3;
+            return Vec3.Normalize(vec3);
         }
 
 
@@ -218,7 +224,7 @@ namespace CustomMath
         {
             float sqrtDot = Mathf.Sqrt(Dot(quat, quat));
 
-            if(sqrtDot < Mathf.Epsilon)
+            if (sqrtDot < Mathf.Epsilon)
             {
                 return Identity;
             }
@@ -237,22 +243,12 @@ namespace CustomMath
         {
             Quat r;
             float time = 1 - t;
-            
 
-            if (Dot(a,b)>=0f) //Se utiliza producto punto para averiguar cual es el camino mas corto
-            {
-                r.x = time * a.x + t * b.x;
-                r.y = time * a.y + t * b.y;
-                r.z = time * a.z + t * b.z;
-                r.w = time * a.w + t * b.w;
-            }
-            else
-            {
-                r.x = time * a.x - t * b.x;
-                r.y = time * a.y - t * b.y;
-                r.z = time * a.z - t * b.z;
-                r.w = time * a.w - t * b.w;
-            }
+            //Multiplicamos el tiempo restante por el eje correspondiente del primer cuaternion y luego sumamos al producto entre el tiempo y el eje correspondiendte del segundo cuaternion
+            r.x = time * a.x + t * b.x;
+            r.y = time * a.y + t * b.y;
+            r.z = time * a.z + t * b.z;
+            r.w = time * a.w + t * b.w;
 
             r.Normalize();
 
@@ -288,30 +284,19 @@ namespace CustomMath
 
             float wa, wb;
 
-            float theta = Mathf.Acos(Dot(a, b)); // El resultado del arco coseno del producto escalar entre 2 Quaterniones, representa el sentido.
+            float theta = Mathf.Acos(Dot(a, b)); // El resultado del arco coseno del producto punto entre 2 Quaterniones, representa el sentido.
 
             if (theta < 0) theta = -theta; // Si el resultado es menor a cero, se invierte el valor para que siempre sea un numero positivo.
 
             float sn = Mathf.Sin(theta);
 
-            wa = Mathf.Sin(time * theta) / sn;
+            wa = Mathf.Sin(time * theta) / sn;  //Lo q ya se recorrio
             wb = Mathf.Sin((1 - time) * theta) / sn;
 
-            if (Dot(a, b) >= 0f) //Se utiliza producto punto para averiguar cual es el camino mas corto
-            {
-                r.x = wa * a.x + wb * b.x;
-                r.y = wa * a.y + wb * b.y;
-                r.z = wa * a.z + wb * b.z;
-                r.w = wa * a.w + wb * b.w;
-            }
-            else
-            {
-                r.x = wa * a.x - wb * b.x;
-                r.y = wa * a.y - wb * b.y;
-                r.z = wa * a.z - wb * b.z;
-                r.w = wa * a.w - wb * b.w;
-            }
-           
+            r.x = wa * a.x + wb * b.x;
+            r.y = wa * a.y + wb * b.y;
+            r.z = wa * a.z + wb * b.z;
+            r.w = wa * a.w + wb * b.w;
 
             r.Normalize();
 
@@ -328,7 +313,7 @@ namespace CustomMath
         {
             // Se calcula el producto punto para saber si los quaterniones tienen la misma orientacion, si la tienen entonces el angulo es 0.
             float dot = Dot(a, b);
-          
+
             // Se busca el numero mas chico entre el absoluto del producto punto y 1.
             // Cuando se consigue eso se calcula el arco coseno en radianes.
             // Se realizan las multiplicaciones para conseguir el angulo en grados.
@@ -336,7 +321,8 @@ namespace CustomMath
             return IsEqualUsingDot(dot) ? 0f : (Mathf.Acos(Mathf.Min(Mathf.Abs(dot), 1f)) * 2f * Mathf.Rad2Deg); //1 es 180 grados en radianes (el maximo angulo posobile entre dos quaternioens)
         }
 
-        private static bool IsEqualUsingDot(float dot) => dot > 0.999999f; // uso este numero constante para darle un margen a la presicion flotante.
+        //SI el producto punto es un numero muy cercano a 1, son iguales (nunca da 1 exacto por la precision
+        private static bool IsEqualUsingDot(float dot) => dot > 0.999999f; // uso este numero constante para darle un margen a la precicion flotante.
 
         /// <summary>
         /// Devuelve el producto Punto entre 2 <see cref="Quat"/>.
@@ -352,7 +338,7 @@ namespace CustomMath
             Vec3 dir = Vec3.Normalize(upwards - forward); //Se obtiene la direccion mediante la obtencion de un nuevo vector resultante de la resta de los dos vectores parametro
             Vec3 rotAxis = Vec3.Cross(Vec3.Forward, dir); //Se utiliza el producto cruz para obtener el eje de rotacion.
             float dot = Vec3.Dot(Vec3.Forward, dir); //Se obtiene el producto punto entre el Forward y el vector de direccion
-            
+
             //Se asignan los valores
             Quat result;
             result.x = rotAxis.x;
@@ -377,19 +363,7 @@ namespace CustomMath
 
             return SlerpUnclamped(from, to, Mathf.Min(1f, maxDegreesDelta / angle));
         }
-
-        //private float NormalizeAngles(float angle)
-        //{
-        //    while (angle>360)
-        //    {
-        //        angle -= 360;
-        //    }
-        //    while (angle<0)
-        //    {
-        //        angle += 360;
-        //    }
-        //    return angle;
-        //}
+      
         #endregion
 
         #region Internals
@@ -406,9 +380,9 @@ namespace CustomMath
 
         public bool Equals(Quat other)
         {
-            return x.Equals(other.x) && 
-                   y.Equals(other.y) && 
-                   z.Equals(other.z) && 
+            return x.Equals(other.x) &&
+                   y.Equals(other.y) &&
+                   z.Equals(other.z) &&
                    w.Equals(other.w);
         }
 

@@ -408,6 +408,7 @@ namespace CustomMath
         // From https://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
         private Quat GetRotation()
         {
+            //Identifica los reales y los imaginarios
             Quat xr = new Quat(1, Mathf.Cos(m11) - Mathf.Sin(m12), Mathf.Sin(m21) + Mathf.Cos(m22), 1);
             Quat yr = new Quat(Mathf.Cos(m00) + Mathf.Sin(m02), 1, -Mathf.Sin(m20) + Mathf.Cos(m22), 1);
             Quat zr = new Quat(Mathf.Cos(m00) - Mathf.Sin(m01), Mathf.Sin(m10) + Mathf.Cos(m11), 1, 1);
