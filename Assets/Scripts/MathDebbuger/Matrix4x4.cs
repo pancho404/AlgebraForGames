@@ -363,6 +363,8 @@ namespace CustomMath
         /// <returns></returns>
         public static Matrix4x4 Transpose(Matrix4x4 matrix)
         {
+            //Se interacmbian los valores en base a una diagonal que va de 00 a 33
+
             float aux;
 
             aux = matrix.m01;

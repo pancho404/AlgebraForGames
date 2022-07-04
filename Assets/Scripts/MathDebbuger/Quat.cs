@@ -290,8 +290,8 @@ namespace CustomMath
 
             float sn = Mathf.Sin(theta);
 
-            wa = Mathf.Sin(time * theta) / sn;  //Lo q ya se recorrio
-            wb = Mathf.Sin((1 - time) * theta) / sn;
+            wa = Mathf.Sin(time * theta) / sn;  //Angulo q ya se recorrio del 1er cuaternion a r
+            wb = Mathf.Sin((1 - time) * theta) / sn; //Angulo que falta recorrer de r a segundo quat
 
             r.x = wa * a.x + wb * b.x;
             r.y = wa * a.y + wb * b.y;
